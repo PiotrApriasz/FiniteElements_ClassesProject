@@ -33,5 +33,8 @@ public static class ShapeFuncsPrinter
 
             Console.WriteLine();
         }
+
+        Console.WriteLine();
+        Console.WriteLine();
     }
 }

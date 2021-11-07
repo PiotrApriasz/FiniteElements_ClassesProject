@@ -1,4 +1,5 @@
-﻿using FiniteElementsProject.Mesh;
+﻿using FiniteElementsProject.FormulaPartsLibrary;
+using FiniteElementsProject.Mesh;
 
 namespace FiniteElementsProject.ConsoleUI;
 
@@ -48,6 +49,45 @@ public static class GridPrinter
             substractor++;
         }
 
+        Console.WriteLine();
+    }
+
+    public static void PrintJacobian(this Jacobian jacobian, int el, int pt)
+    {
+        Console.WriteLine($"Jacobians for element {el + 1}, point: {pt + 1} ------------------------------");
+        Console.WriteLine("Jacobian normal -------------------------------------------------");
+        Console.WriteLine();
+        
+        for (int i = 0; i < jacobian.JacobianNormal.GetLength(0); i++)
+        {
+            for (int j = 0; j < jacobian.JacobianNormal.GetLength(1); j++)
+            {
+                Console.Write($"{jacobian.JacobianNormal[i, j]:0.00000000} ");
+            }
+
+            Console.WriteLine();
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"Jacobian normal Det: {jacobian.JacobianDet:0.00000000}");
+        Console.WriteLine("-----------------------------------------------------------------");
+        
+        Console.WriteLine("Jacobian inverted -----------------------------------------------");
+        Console.WriteLine();
+        
+        for (int i = 0; i < jacobian.JacobianNormal.GetLength(0); i++)
+        {
+            for (int j = 0; j < jacobian.JacobianNormal.GetLength(1); j++)
+            {
+                Console.Write($"{jacobian.JacobianInverted[i, j]:0.00000000} ");
+            }
+
+            Console.WriteLine();
+        }
+        
+        Console.WriteLine();
+        Console.WriteLine($"Jacobian inverted Det: {jacobian.JacobianDetInverted:0.00000000}");
+        Console.WriteLine("-----------------------------------------------------------------");
         Console.WriteLine();
     }
 }

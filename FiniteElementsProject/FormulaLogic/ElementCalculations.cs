@@ -1,4 +1,5 @@
-﻿using FiniteElementsProject.Elements;
+﻿using FiniteElementsProject.ConsoleUI;
+using FiniteElementsProject.Elements;
 using FiniteElementsProject.FormulaPartsLibrary;
 using FiniteElementsProject.Mesh;
 
@@ -28,7 +29,7 @@ public static class ElementCalculations
         }
     }
 
-    public static void CalculateHMatrix(this Element4_2D element42D, Jacobian jacobian, Grid grid)
+    public static void CalculateHMatrix(this Grid grid, Element4_2D element42D)
     {
         var points = element42D.NKsi.GetLength(1);
         var size1 = element42D.NKsi.GetLength(0);
@@ -39,25 +40,10 @@ public static class ElementCalculations
         {
             for (int j = 0; j < points; j++)
             {
-                CalculateOnePointJacobian(element42D, i, j, ref jacobian, grid);
-                var jacSize1 = jacobian.JacobianComplement.GetLength(0);
-                var jacSize2 = jacobian.JacobianComplement.GetLength(1);
-            
-                var detInverted = 1 / jacobian.JacobianDet;
-                var jacobianInverted = new double[jacSize1, jacSize2];
+                var jacobian = CalculateOnePointJacobian(element42D, i, j, grid);
+                jacobian.PrintJacobian(i, j);
 
-                for (int k = 0; k < jacSize1; k++)
-                {
-                    for (int l = 0; l < jacSize2; l++)
-                    {
-                        jacobianInverted[k,l] = jacobian.JacobianComplement[k, l] * detInverted;
-                        Console.Write($"{jacobianInverted[k, l]:0.00000000} ");
-                    }
-
-                    Console.WriteLine();
-                }
-                
-                var oneHMatrix = CalculateOneHMatrix(element42D, i, j, jacobianInverted, 30, jacobian.JacobianDet);
+                var oneHMatrix = CalculateOneHMatrix(element42D, i, j, jacobian.JacobianInverted, 30, jacobian.JacobianDet);
 
                 for (int k = 0; k < size1; k++)
                 {
@@ -66,10 +52,6 @@ public static class ElementCalculations
                         hMatrix[k, l] += oneHMatrix[k, l];
                     }
                 }
-
-                Console.WriteLine();
-                Console.WriteLine($"Inverted det = {detInverted:0.00000000}");
-                Console.WriteLine();
             }
         }
     }
@@ -105,7 +87,7 @@ public static class ElementCalculations
         return hMatrix;
     }
 
-    private static void CalculateOnePointJacobian(Element4_2D element42D, int i, int j, ref Jacobian jacobian, Grid grid)
+    private static Jacobian CalculateOnePointJacobian(Element4_2D element42D, int i, int j, Grid grid)
     {
         var nKsiValues = Enumerable.Range(0, element42D.NKsi.GetLength(0))
             .Select(x => element42D.NKsi[x, 0])
@@ -136,8 +118,10 @@ public static class ElementCalculations
             xDerEta += nEtaValues[k] * /*currentNodeValues.X;*/ tempX[k];
         }
         
-        jacobian.JacobianNormal = new [,] { { xDerKsi, yDerKsi }, { xDerEta, yDerEta } };
-        jacobian.JacobianComplement = new [,] { { yDerEta, -yDerKsi }, { -xDerEta, xDerKsi } };
-        jacobian.JacobianDet = (xDerKsi * yDerEta) - (yDerKsi * xDerEta);
+        var jacobianNormal = new [,] { { xDerKsi, yDerKsi }, { xDerEta, yDerEta } };
+        var jacobianComplement = new [,] { { yDerEta, -yDerKsi }, { -xDerEta, xDerKsi } };
+        var jacobianDet = (xDerKsi * yDerEta) - (yDerKsi * xDerEta);
+
+        return new Jacobian(jacobianNormal, jacobianComplement, jacobianDet);
     }
 }
