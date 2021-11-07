@@ -34,10 +34,11 @@ public static class ElementCalculations
         var points = element42D.NKsi.GetLength(1);
         var size1 = element42D.NKsi.GetLength(0);
         var size2 = element42D.NKsi.GetLength(1);
-        var hMatrix = new double[size1, size2];
 
         for (int i = 0; i < grid.Elements.Length; i++)
         {
+            var hMatrix = new double[size1, size2];
+            
             for (int j = 0; j < points; j++)
             {
                 var jacobian = CalculateOnePointJacobian(element42D, i, j, grid);
@@ -53,6 +54,8 @@ public static class ElementCalculations
                     }
                 }
             }
+
+            grid.Elements[i].HMatrix = hMatrix;
         }
     }
 
@@ -111,11 +114,11 @@ public static class ElementCalculations
         for (int k = 0; k < 4; k++)
         {
             var currentNodeValues = grid.Nodes[currentElement.ID[k] - 1];
-            xDerKsi += nKsiValues[k] * /*currentNodeValues.X;*/ tempX[k];
-            yDerEta += nEtaValues[k] * /*currentNodeValues.Y;*/ tempY[k];
+            xDerKsi += nKsiValues[k] * currentNodeValues.X; /*tempX[k]*/
+            yDerEta += nEtaValues[k] * currentNodeValues.Y; /*tempY[k]*/
 
-            yDerKsi += nKsiValues[k] * /*currentNodeValues.Y;*/ tempY[k];
-            xDerEta += nEtaValues[k] * /*currentNodeValues.X;*/ tempX[k];
+            yDerKsi += nKsiValues[k] * currentNodeValues.Y; /*tempY[k]*/
+            xDerEta += nEtaValues[k] * currentNodeValues.X; /*tempX[k]*/
         }
         
         var jacobianNormal = new [,] { { xDerKsi, yDerKsi }, { xDerEta, yDerEta } };

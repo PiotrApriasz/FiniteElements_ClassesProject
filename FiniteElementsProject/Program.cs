@@ -20,6 +20,7 @@ try
     element4_2D.ShFunDer_4_2D_ValPrint();
 
     mesh.CalculateHMatrix(element4_2D);
+    mesh.PrintHMatrix();
 }
 catch (Exception e)
 {

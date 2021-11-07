@@ -90,4 +90,26 @@ public static class GridPrinter
         Console.WriteLine("-----------------------------------------------------------------");
         Console.WriteLine();
     }
+
+    public static void PrintHMatrix(this Grid grid)
+    {
+        for (int i = 0; i < grid.Elements.Length; i++)
+        {
+            Console.WriteLine($"H matrix for element {i + 1} -------------------------------------------");
+            Console.WriteLine();
+            for (int j = 0; j < grid.Elements[i].HMatrix.GetLength(0); j++)
+            {
+                for (int k = 0; k < grid.Elements[i].HMatrix.GetLength(1); k++)
+                {
+                    Console.Write($"{grid.Elements[i].HMatrix[j, k]:0.000} ");
+                }
+
+                Console.WriteLine();
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("-------------------------------------------------------------------");
+            Console.WriteLine();
+        }
+    }
 }
