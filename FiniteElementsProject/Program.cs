@@ -22,7 +22,7 @@ try
 
     Console.WriteLine();
     
-    element4_2D.CalculateJacobian(element4_2D_Jacobian, mesh);
+    element4_2D.CalculateHMatrix(element4_2D_Jacobian, mesh);
 }
 catch (Exception e)
 {

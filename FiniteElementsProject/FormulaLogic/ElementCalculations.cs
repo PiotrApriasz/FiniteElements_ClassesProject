@@ -28,30 +28,43 @@ public static class ElementCalculations
         }
     }
 
-    public static void CalculateJacobian(this Element4_2D element42D, Jacobian jacobian, Grid grid)
+    public static void CalculateHMatrix(this Element4_2D element42D, Jacobian jacobian, Grid grid)
     {
         var points = element42D.NKsi.GetLength(1);
+        var size1 = element42D.NKsi.GetLength(0);
+        var size2 = element42D.NKsi.GetLength(1);
+        var hMatrix = new double[size1, size2];
 
         for (int i = 0; i < grid.Elements.Length; i++)
         {
             for (int j = 0; j < points; j++)
             {
                 CalculateOnePointJacobian(element42D, i, j, ref jacobian, grid);
-                var jacSize1 = jacobian.JacobianInverted.GetLength(0);
-                var jacSize2 = jacobian.JacobianInverted.GetLength(1);
+                var jacSize1 = jacobian.JacobianComplement.GetLength(0);
+                var jacSize2 = jacobian.JacobianComplement.GetLength(1);
             
                 var detInverted = 1 / jacobian.JacobianDet;
-                var jacobianTransposed = new double[jacSize1, jacSize2];
+                var jacobianInverted = new double[jacSize1, jacSize2];
 
                 for (int k = 0; k < jacSize1; k++)
                 {
                     for (int l = 0; l < jacSize2; l++)
                     {
-                        jacobianTransposed[k,l] = jacobian.JacobianInverted[k, l] * detInverted;
-                        Console.Write($"{jacobianTransposed[k, l]:0.00000000} ");
+                        jacobianInverted[k,l] = jacobian.JacobianComplement[k, l] * detInverted;
+                        Console.Write($"{jacobianInverted[k, l]:0.00000000} ");
                     }
 
                     Console.WriteLine();
+                }
+                
+                var oneHMatrix = CalculateOneHMatrix(element42D, i, j, jacobianInverted, 30, jacobian.JacobianDet);
+
+                for (int k = 0; k < size1; k++)
+                {
+                    for (int l = 0; l < size2; l++)
+                    {
+                        hMatrix[k, l] += oneHMatrix[k, l];
+                    }
                 }
 
                 Console.WriteLine();
@@ -59,6 +72,37 @@ public static class ElementCalculations
                 Console.WriteLine();
             }
         }
+    }
+
+    private static double[,] CalculateOneHMatrix(Element4_2D element42D, int i, int j, double[,] jacobianInverted,
+        int kFactor, double jacobianDet)
+    {
+        var size1 = element42D.NKsi.GetLength(0);
+        var size2 = element42D.NKsi.GetLength(1);
+        
+        var nDerX = new double[size1];
+        var nDerY = new double[size1];
+        var hMatrix = new double[size1, size2];
+
+        for (int k = 0; k < size1; k++)
+        {
+            nDerX[k] = jacobianInverted[0, 0] * element42D.NKsi[k, j]
+                          + jacobianInverted[0, 1] * element42D.NEta[k, j];
+            nDerY[k] = jacobianInverted[1, 0] * element42D.NKsi[k, j]
+                          + jacobianInverted[1, 1] * element42D.NEta[k, j];
+        }
+        
+        for (int k = 0; k < size1; k++)
+        {
+            for (int l = 0; l < size2; l++)
+            {
+                hMatrix[k, l] = nDerX[k] * nDerX[l] + nDerY[k] * nDerY[l];
+                hMatrix[k, l] *= kFactor;
+                hMatrix[k, l] *= jacobianDet;
+            }
+        }
+        
+        return hMatrix;
     }
 
     private static void CalculateOnePointJacobian(Element4_2D element42D, int i, int j, ref Jacobian jacobian, Grid grid)
@@ -79,18 +123,21 @@ public static class ElementCalculations
 
         var currentElement = grid.Elements[i];
 
+        var tempX = new double[] { 0, 0.025, 0.025, 0 };
+        var tempY = new double[] { 0, 0, 0.025, 0.025 };
+
         for (int k = 0; k < 4; k++)
         {
             var currentNodeValues = grid.Nodes[currentElement.ID[k] - 1];
-            xDerKsi += nKsiValues[k] * currentNodeValues.X;
-            yDerEta += nEtaValues[k] * currentNodeValues.Y;
+            xDerKsi += nKsiValues[k] * /*currentNodeValues.X;*/ tempX[k];
+            yDerEta += nEtaValues[k] * /*currentNodeValues.Y;*/ tempY[k];
 
-            yDerKsi += nKsiValues[k] * currentNodeValues.Y;
-            xDerEta += nEtaValues[k] * currentNodeValues.X;
+            yDerKsi += nKsiValues[k] * /*currentNodeValues.Y;*/ tempY[k];
+            xDerEta += nEtaValues[k] * /*currentNodeValues.X;*/ tempX[k];
         }
         
         jacobian.JacobianNormal = new [,] { { xDerKsi, yDerKsi }, { xDerEta, yDerEta } };
-        jacobian.JacobianInverted = new [,] { { yDerEta, -yDerKsi }, { -xDerEta, xDerKsi } };
+        jacobian.JacobianComplement = new [,] { { yDerEta, -yDerKsi }, { -xDerEta, xDerKsi } };
         jacobian.JacobianDet = (xDerKsi * yDerEta) - (yDerKsi * xDerEta);
     }
 }
