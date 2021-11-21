@@ -1,4 +1,6 @@
-﻿namespace FiniteElementsProject.FormulaPartsLibrary;
+﻿using FiniteElementsProject.Elements;
+
+namespace FiniteElementsProject.FormulaPartsLibrary;
 
 public struct GuassElements
 {
@@ -34,6 +36,22 @@ public class GaussQuadrature
 
     public GuassElements GetGaussQuadrature(int points) => _guassTabele.ElementAt(points - 4);
 
+    public (double[] scale, double[] values) Get2IntegrationPointsElements()
+    {
+        var scale = _guassTabele[0].Ak.ToArray();
+        var values = _guassTabele[0].Xk.ToArray();
+
+        return (scale, values);
+    }
+    
+    public (double[] scale, double[] values) Get3IntegrationPointsElements()
+    {
+        var scale = _guassTabele[1].Ak.ToArray();
+        var values = _guassTabele[1].Xk.ToArray();
+
+        return (scale, values);
+    }
+    
     public List<(double, double)> Generate4Nodes(int points)
     {
         var gaussElements = GetGaussQuadrature(points);

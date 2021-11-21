@@ -7,8 +7,10 @@ using FiniteElementsProject.Mesh;
 
 try
 {
-    var mesh = new Grid(0.2, 0.1, 5, 4);
+    var mesh = new Grid(0.1, 0.1, 4, 4);
     var element4_2D = new Element4_2D(4);
+    element4_2D.CalculateIntegrationPoints();
+    element4_2D.CalculateNValues();
 
     mesh.CalculateNodes();
     mesh.CalculateIds();
@@ -16,11 +18,11 @@ try
     mesh.PrintIds();
     mesh.PrintNodes();
 
-    element4_2D.CalculateShapeFuncDerValues();
-    element4_2D.ShFunDer_4_2D_ValPrint();
+    //element4_2D.CalculateShapeFuncDerValues();
+    //element4_2D.ShFunDer_4_2D_ValPrint();
 
-    mesh.CalculateHMatrix(element4_2D);
-    mesh.PrintHMatrix();
+    //mesh.CalculateHMatrix(element4_2D);
+    //mesh.PrintHMatrix();
 }
 catch (Exception e)
 {

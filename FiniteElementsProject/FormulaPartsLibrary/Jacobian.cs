@@ -6,7 +6,6 @@ public class Jacobian
     public double JacobianDet { get; set; }
     public double JacobianDetInverted { get; set; }
     public double[,] JacobianInverted { get; set; }
-    
     private double[,] JacobianComplement { get; set; }
 
     public Jacobian(double[,] jacobianNormal, double[,] jacobianComplement, double jacobianDet)

@@ -25,6 +25,11 @@ public static class MeshCalculations
 
                 var node = new Node() { X = x, Y = y };
 
+                if (x == 0) node.BoundaryCondition = true;
+                if (y == 0) node.BoundaryCondition = true;
+                if (x == grid.B) node.BoundaryCondition = true;
+                if (y == grid.H) node.BoundaryCondition = true;
+
                 grid.Nodes[counter] = node;
 
                 counter++;
@@ -54,4 +59,47 @@ public static class MeshCalculations
             k++;
         }
     }
+
+    /*public static void CalculateGlobalHMatrix(this Grid mesh)
+    {
+        var tempXMatrix = new int[mesh.Elements[0].HMatrix.GetLength(0),
+            mesh.Elements[0].HMatrix.GetLength(1)];
+        
+        var tempYMatrix = new int[mesh.Elements[0].HMatrix.GetLength(0),
+            mesh.Elements[0].HMatrix.GetLength(1)];
+
+        foreach (var element in mesh.Elements)
+        {
+            for (int i = 0; i < element.ID.Length; i++)
+            {
+                for (int j = 0; j < element.ID.Length; j++)
+                {
+                    tempXMatrix[i, j] =  
+                }
+            }
+        }
+    }*/
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

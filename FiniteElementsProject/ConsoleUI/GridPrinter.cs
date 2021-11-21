@@ -17,7 +17,7 @@ public static class GridPrinter
         {
             for (int j = (grid.nH - substractor - 1); j < grid.nN - substractor; j += grid.nH)
             {
-                Console.Write($"Node[{j + 1}] : X = {grid.Nodes[j].X:0.000}, Y = {grid.Nodes[j].Y:0.000}");
+                Console.Write($"Node[{j + 1}] : X = {grid.Nodes[j].X:0.000}, Y = {grid.Nodes[j].Y:0.000}, BC = {grid.Nodes[j].BoundaryCondition}");
                 Console.Write(" | ");
             }
 
