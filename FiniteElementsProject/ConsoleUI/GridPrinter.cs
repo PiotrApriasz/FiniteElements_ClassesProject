@@ -99,7 +99,7 @@ public static class GridPrinter
             Console.WriteLine();
             for (int j = 0; j < grid.Elements[i].HMatrix.GetLength(0); j++)
             {
-                for (int k = 0; k < grid.Elements[i].HMatrix.GetLength(1); k++)
+                for (int k = 0; k < grid.Elements[i].HMatrix.GetLength(0); k++)
                 {
                     Console.Write($"{grid.Elements[i].HMatrix[j, k]:0.000} ");
                 }
@@ -110,6 +110,33 @@ public static class GridPrinter
             Console.WriteLine();
             Console.WriteLine("-------------------------------------------------------------------");
             Console.WriteLine();
+        }
+    }
+
+    public static void PrintHbcMatrix(this Grid grid)
+    {
+        for (int i = 0; i < grid.Elements.Length; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                var hbcMatrix = grid.Elements[i].HbcMatrix.ElementAt(j);
+                
+                Console.WriteLine($"Hbc matrix for element {i + 1} | Side {j + 1} ------------------------------");
+                Console.WriteLine();
+                for (int k = 0; k < 4; k++)
+                {
+                    for (int l = 0; l < 4; l++)
+                    {
+                        Console.Write($"{hbcMatrix[k, l]:0.000} ");
+                    }
+
+                    Console.WriteLine();
+                }
+                
+                Console.WriteLine();
+                Console.WriteLine("-------------------------------------------------------------------");
+                Console.WriteLine();
+            }
         }
     }
 }

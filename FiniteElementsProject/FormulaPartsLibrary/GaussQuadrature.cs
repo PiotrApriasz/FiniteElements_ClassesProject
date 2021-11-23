@@ -34,7 +34,10 @@ public class GaussQuadrature
         };
     }
 
-    public GuassElements GetGaussQuadrature(int points) => _guassTabele.ElementAt(points - 4);
+    public GuassElements GetGaussQuadrature(int points)
+    {
+        return points == 4 ? _guassTabele.ElementAt(0) : _guassTabele.ElementAt(1);
+    }
 
     public (double[] scale, double[] values) Get2IntegrationPointsElements()
     {
