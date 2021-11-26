@@ -11,8 +11,9 @@ public struct Grid
 
     public Node[] Nodes { get; set; }
     public Element[] Elements { get; set; }
-
+    
     public double[,] GlobalHMatrix { get; set; }
+    public double[,] GlobalPVector { get; set; }
 
     public Grid(double h, double b, int nh, int nb)
     {
@@ -28,5 +29,6 @@ public struct Grid
         Elements = new Element[nE];
 
         GlobalHMatrix = new double[nH * nB, nH * nB];
+        GlobalPVector = new double[1, nN];
     }
 }

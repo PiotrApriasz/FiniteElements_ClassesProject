@@ -91,7 +91,7 @@ public static class MeshCalculations
         }
     }
 
-    public static void CalculateHbcMatrix(this Grid grid, Element4_2D element42D)
+    public static void CalculateHbcMatrixAndPVector(this Grid grid, Element4_2D element42D, double t0)
     {
         var size1 = element42D.NKsi.GetLength(0);
 
@@ -102,49 +102,57 @@ public static class MeshCalculations
             new Node() { X = 0.025, Y = 0.025 },
             new Node() { X = 0, Y = 0.025, BoundaryCondition = true }
         };
-        
-        foreach (var element in grid.Elements)
+
+        for (var i = 0; i < grid.Elements.Length; i++)
         {
             var hbcMatrix = new double[size1, size1];
+            var pVector = new double[1, size1];
 
             for (int j = 0; j < 4; j++)
             {
-                var node1 = grid.Nodes[element.ID[j] - 1];
-                var node2 = j == 3 ? grid.Nodes[element.ID[0] - 1] : grid.Nodes[element.ID[j + 1] - 1]; 
+                var node1 = grid.Nodes[grid.Elements[i].ID[j] - 1];
+                var node2 = j == 3 ? grid.Nodes[grid.Elements[i].ID[0] - 1] : grid.Nodes[grid.Elements[i].ID[j + 1] - 1];
                 //var node1 = nodesTemp[j];
                 //var node2 = j == 3 ? nodesTemp[0] : nodesTemp[j + 1];
 
-                var oneHbcMatrix = new double[4, 4];
-                
                 if (node1.BoundaryCondition && node2.BoundaryCondition)
                 {
-                    oneHbcMatrix = element42D.CalculateOneHbcMatrix(j, 25, node1, node2);
+                    double[,] oneHbcMatrix;
+                    double[,] onePVector;
+                    
+                    (oneHbcMatrix, onePVector) = element42D.CalculateOneHbcMatrixAndOnePVector(j, 25, node1, node2, t0);
+
+                    for (int k = 0; k < size1; k++)
+                    {
+                        for (int l = 0; l < size1; l++)
+                        {
+                            hbcMatrix[k, l] += oneHbcMatrix[k, l];
+                        }
+                        pVector[0, k] += onePVector[0, k];
+                    }
                 }
-                
-                element.HbcMatrix.Add(oneHbcMatrix);
             }
+
+            grid.Elements[i].HbcMatrix = hbcMatrix;
+            grid.Elements[i].PVector = pVector;
         }
     }
 
-    /*public static void CalculateGlobalHMatrix(this Grid mesh)
+    public static void CalculateGlobalHMatrix(this Grid mesh)
     {
-        var tempXMatrix = new int[mesh.Elements[0].HMatrix.GetLength(0),
-            mesh.Elements[0].HMatrix.GetLength(1)];
-        
-        var tempYMatrix = new int[mesh.Elements[0].HMatrix.GetLength(0),
-            mesh.Elements[0].HMatrix.GetLength(1)];
-
         foreach (var element in mesh.Elements)
         {
-            for (int i = 0; i < element.ID.Length; i++)
+            for (int i = 0; i < 4; i++)
             {
-                for (int j = 0; j < element.ID.Length; j++)
+                for (int j = 0; j < 4; j++)
                 {
-                    tempXMatrix[i, j] =  
+                    mesh.GlobalHMatrix[element.ID[i] - 1, element.ID[j] - 1] += element.HMatrix[i, j] + element.HbcMatrix[i, j];
                 }
+
+                mesh.GlobalPVector[0, element.ID[i] - 1] += element.PVector[0, i];
             }
         }
-    }*/
+    }
 }
 
 

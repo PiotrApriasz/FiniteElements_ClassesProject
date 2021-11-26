@@ -25,8 +25,11 @@ try
     mesh.CalculateHMatrix(element4_2D);
     mesh.PrintHMatrix();
     
-    mesh.CalculateHbcMatrix(element4_2D);
+    mesh.CalculateHbcMatrixAndPVector(element4_2D, 1200);
     mesh.PrintHbcMatrix();
+    
+    mesh.CalculateGlobalHMatrix();
+    mesh.PrintGlobalHMatrix();
 }
 catch (Exception e)
 {

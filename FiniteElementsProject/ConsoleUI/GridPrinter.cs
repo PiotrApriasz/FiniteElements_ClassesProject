@@ -117,26 +117,43 @@ public static class GridPrinter
     {
         for (int i = 0; i < grid.Elements.Length; i++)
         {
-            for (int j = 0; j < 4; j++)
+            var hbcMatrix = grid.Elements[i].HbcMatrix;
+                
+            Console.WriteLine($"Hbc matrix for element {i + 1} ------------------------------");
+            Console.WriteLine();
+            for (int k = 0; k < 4; k++)
             {
-                var hbcMatrix = grid.Elements[i].HbcMatrix.ElementAt(j);
-                
-                Console.WriteLine($"Hbc matrix for element {i + 1} | Side {j + 1} ------------------------------");
-                Console.WriteLine();
-                for (int k = 0; k < 4; k++)
+                for (int l = 0; l < 4; l++)
                 {
-                    for (int l = 0; l < 4; l++)
-                    {
-                        Console.Write($"{hbcMatrix[k, l]:0.000} ");
-                    }
-
-                    Console.WriteLine();
+                    Console.Write($"{hbcMatrix[k, l]:0.000} ");
                 }
-                
-                Console.WriteLine();
-                Console.WriteLine("-------------------------------------------------------------------");
+
                 Console.WriteLine();
             }
+            
+            Console.WriteLine();
+            Console.WriteLine("-------------------------------------------------------------------");
+            Console.WriteLine();
         }
+    }
+
+    public static void PrintGlobalHMatrix(this Grid grid)
+    {
+        Console.WriteLine("Global H matrix for mesh ---------------------------------------------------");
+        Console.WriteLine();
+        
+        for (int i = 0; i < grid.GlobalHMatrix.GetLength(0); i++)
+        {
+            for (int j = 0; j < grid.GlobalHMatrix.GetLength(1); j++)
+            {
+                Console.Write($"{grid.GlobalHMatrix[i, j]:0.000} | ");
+            }
+
+            Console.WriteLine();
+        }
+        
+        Console.WriteLine();
+        Console.WriteLine("-------------------------------------------------------------------");
+        Console.WriteLine();
     }
 }
