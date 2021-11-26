@@ -74,7 +74,7 @@ public static class MeshCalculations
             for (int j = 0; j < points; j++)
             {
                 var jacobian = element42D.CalculateOnePointJacobian(i, grid);
-                jacobian.PrintJacobian(i, j);
+                //jacobian.PrintJacobian(i, j);
 
                 var oneHMatrix = element42D.CalculateOneHMatrix(j, jacobian.JacobianInverted, 25, jacobian.JacobianDet);
 
@@ -91,7 +91,7 @@ public static class MeshCalculations
         }
     }
 
-    public static void CalculateHbcMatrixAndPVector(this Grid grid, Element4_2D element42D, double t0)
+    public static void CalculateHbcMatrixAndPVector(this Grid grid, Element4_2D element42D, double[] bcValues)
     {
         var size1 = element42D.NKsi.GetLength(0);
 
@@ -106,7 +106,7 @@ public static class MeshCalculations
         for (var i = 0; i < grid.Elements.Length; i++)
         {
             var hbcMatrix = new double[size1, size1];
-            var pVector = new double[1, size1];
+            var pVector = new double[size1];
 
             for (int j = 0; j < 4; j++)
             {
@@ -118,9 +118,9 @@ public static class MeshCalculations
                 if (node1.BoundaryCondition && node2.BoundaryCondition)
                 {
                     double[,] oneHbcMatrix;
-                    double[,] onePVector;
+                    double[] onePVector;
                     
-                    (oneHbcMatrix, onePVector) = element42D.CalculateOneHbcMatrixAndOnePVector(j, 25, node1, node2, t0);
+                    (oneHbcMatrix, onePVector) = element42D.CalculateOneHbcMatrixAndOnePVector(j, 25, node1, node2, bcValues[j]);
 
                     for (int k = 0; k < size1; k++)
                     {
@@ -128,7 +128,7 @@ public static class MeshCalculations
                         {
                             hbcMatrix[k, l] += oneHbcMatrix[k, l];
                         }
-                        pVector[0, k] += onePVector[0, k];
+                        pVector[k] += onePVector[k];
                     }
                 }
             }
@@ -138,7 +138,7 @@ public static class MeshCalculations
         }
     }
 
-    public static void CalculateGlobalHMatrix(this Grid mesh)
+    public static void CalculateGlobalHMatrixAndGlobalPVector(this Grid mesh)
     {
         foreach (var element in mesh.Elements)
         {
@@ -149,7 +149,7 @@ public static class MeshCalculations
                     mesh.GlobalHMatrix[element.ID[i] - 1, element.ID[j] - 1] += element.HMatrix[i, j] + element.HbcMatrix[i, j];
                 }
 
-                mesh.GlobalPVector[0, element.ID[i] - 1] += element.PVector[0, i];
+                mesh.GlobalPVector[element.ID[i] - 1] += element.PVector[i];
             }
         }
     }

@@ -126,14 +126,15 @@ public static class ElementCalculations
         return hMatrix;
     }
 
-    public static (double[,] hbcMatrix, double[,] pVector) CalculateOneHbcMatrixAndOnePVector(this Element4_2D element42D, int l, int kFactor, Node node1, Node node2, double t0)
+    public static (double[,] hbcMatrix, double[] pVector) CalculateOneHbcMatrixAndOnePVector(this Element4_2D element42D,
+        int l, int kFactor, Node node1, Node node2, double t0)
     {
         var det = ElementHelper.CalculateSideLenght(node1, node2);
         var points = element42D.IntegrationPoints[0].Eta.Length;
         var size1 = element42D.NKsi.GetLength(0);
 
         var hbcMatrix = new double[size1, size1];
-        var pVector = new double[1, size1];
+        var pVector = new double[size1];
 
         for (int i = 0; i < size1; i++)
         {
@@ -152,12 +153,12 @@ public static class ElementCalculations
 
             for (int j = 0; j < points; j++)
             {
-                pVector[0, i] += element42D.ShapeFunctionValues[l].NValues.ElementAt(i)[j] * 1200;
-                pVector[0, i] *= element42D.IntegrationPoints[l].Scale[j];
+                pVector[i] += element42D.ShapeFunctionValues[l].NValues.ElementAt(i)[j] * t0;
+                pVector[i] *= element42D.IntegrationPoints[l].Scale[j];
             }
 
-            pVector[0, i] *= kFactor;
-            pVector[0, i] *= det;
+            pVector[i] *= kFactor;
+            pVector[i] *= det;
         }
 
         return (hbcMatrix, pVector);

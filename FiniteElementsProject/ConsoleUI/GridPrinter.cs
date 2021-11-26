@@ -156,4 +156,19 @@ public static class GridPrinter
         Console.WriteLine("-------------------------------------------------------------------");
         Console.WriteLine();
     }
+
+    public static void PrintFinalValues(this Grid grid)
+    {
+        Console.WriteLine("Final values of searched variable --------------------------------------");
+        Console.WriteLine();
+
+        for (int i = 0; i < grid.nN; i++)
+        {
+            Console.WriteLine($"Value {i + 1}: {grid.FiniteElementValues[i]:0.000}");
+        }
+        
+        Console.WriteLine();
+        Console.WriteLine("-------------------------------------------------------------------");
+        Console.WriteLine();
+    }
 }
