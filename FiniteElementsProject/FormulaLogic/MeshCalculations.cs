@@ -7,7 +7,7 @@ namespace FiniteElementsProject.FormulaLogic;
 
 public static class MeshCalculations
 {
-    public static void CalculateNodes(this Grid grid)
+    public static void CalculateNodes(this Grid grid, double t0)
     {
         double x;
         double y;
@@ -24,7 +24,7 @@ public static class MeshCalculations
                 x = i * dX;
                 y = j * dY;
 
-                var node = new Node() { X = x, Y = y };
+                var node = new Node() { X = x, Y = y, T0 = t0};
 
                 if (x == 0) node.BoundaryCondition = true;
                 if (y == 0) node.BoundaryCondition = true;
@@ -61,33 +61,36 @@ public static class MeshCalculations
         }
     }
 
-    public static void CalculateHMatrix(this Grid grid, Element4_2D element42D)
+    public static void CalculateHAndCMatrix(this Grid grid, Element4_2D element42D)
     {
         var points = element42D.NKsi.GetLength(1);
         var size1 = element42D.NKsi.GetLength(0);
-        var size2 = element42D.NKsi.GetLength(1);
 
         for (int i = 0; i < grid.Elements.Length; i++)
         {
             var hMatrix = new double[size1, size1];
+            var cMatrix = new double[size1, size1];
             
             for (int j = 0; j < points; j++)
             {
                 var jacobian = element42D.CalculateOnePointJacobian(i, grid);
                 //jacobian.PrintJacobian(i, j);
 
-                var oneHMatrix = element42D.CalculateOneHMatrix(j, jacobian.JacobianInverted, 25, jacobian.JacobianDet);
+                var matrixes = element42D.CalculateOneHAndCMatrix(j, jacobian.JacobianInverted, 25,
+                    jacobian.JacobianDet, 700, 7800);
 
                 for (int k = 0; k < size1; k++)
                 {
                     for (int l = 0; l < size1; l++)
                     {
-                        hMatrix[k, l] += oneHMatrix[k, l];
+                        hMatrix[k, l] += matrixes.HMatrix[k, l];
+                        cMatrix[k, l] += matrixes.CMatrix[k, l];
                     }
                 }
             }
 
             grid.Elements[i].HMatrix = hMatrix;
+            grid.Elements[i].CMatrix = cMatrix;
         }
     }
 
@@ -120,7 +123,8 @@ public static class MeshCalculations
                     double[,] oneHbcMatrix;
                     double[] onePVector;
                     
-                    (oneHbcMatrix, onePVector) = element42D.CalculateOneHbcMatrixAndOnePVector(j, 25, node1, node2, bcValues[j]);
+                    (oneHbcMatrix, onePVector) = element42D.CalculateOneHbcMatrixAndOnePVector(j, 300, node1,
+                        node2, bcValues[j]);
 
                     for (int k = 0; k < size1; k++)
                     {
@@ -147,10 +151,38 @@ public static class MeshCalculations
                 for (int j = 0; j < 4; j++)
                 {
                     mesh.GlobalHMatrix[element.ID[i] - 1, element.ID[j] - 1] += element.HMatrix[i, j] + element.HbcMatrix[i, j];
+                    mesh.GlobalCMatrix[element.ID[i] - 1, element.ID[j] - 1] += element.CMatrix[i, j];
                 }
 
                 mesh.GlobalPVector[element.ID[i] - 1] += element.PVector[i];
             }
+        }
+    }
+
+    public static void CalculateFullHMatrix(this Grid mesh, int timeStep)
+    {
+        for (int i = 0; i < mesh.GlobalCMatrix.GetLength(0); i++)
+        {
+            for (int j = 0; j < mesh.GlobalCMatrix.GetLength(1); j++)
+            {
+                mesh.FullHMatrix[i, j] = mesh.GlobalHMatrix[i, j] + (mesh.GlobalCMatrix[i, j] / timeStep);
+            }
+        }
+    }
+
+    public static void CalculateFullPVector(this Grid mesh, int timeStep)
+    {
+        
+        for (int i = 0; i < mesh.GlobalPVector.Length; i++)
+        {
+            var element = 0.0;
+            
+            for (int j = 0; j < mesh.GlobalPVector.Length; j++)
+            {
+                element += (mesh.GlobalCMatrix[i, j] / timeStep) * mesh.Nodes[j].T0;
+            }
+
+            mesh.FullPVector[i] = mesh.GlobalPVector[i] + element;
         }
     }
 }

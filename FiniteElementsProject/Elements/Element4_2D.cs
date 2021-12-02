@@ -6,8 +6,9 @@ public struct Element4_2D
 {
     public double[,] NKsi { get; }
     public double[,] NEta { get; }
+    public double[,] NValues { get; set; }
     public IntegrationPoints[] IntegrationPoints { get; set; }
-    public ShapeFunctionValues[] ShapeFunctionValues { get; set; }
+    public ShapeFunctionValues[] ShapeFunctionValuesSurface { get; set; }
     public Func<double, double>[] DerKsi { get; }
     public Func<double, double>[] DerEta { get; }
     public Func<double, double, double>[] ShapeFunctions { get; }
@@ -16,6 +17,7 @@ public struct Element4_2D
     {
         NKsi = new double[4, points];
         NEta = new double[4, points];
+        NValues = new double[points, 4];
 
         IntegrationPoints = new IntegrationPoints[]
         {
@@ -25,7 +27,7 @@ public struct Element4_2D
             new IntegrationPoints((int)Math.Sqrt(points)),
         };
 
-        ShapeFunctionValues = new[]
+        ShapeFunctionValuesSurface = new[]
         {
             new ShapeFunctionValues((int)Math.Sqrt(points)),
             new ShapeFunctionValues((int)Math.Sqrt(points)),

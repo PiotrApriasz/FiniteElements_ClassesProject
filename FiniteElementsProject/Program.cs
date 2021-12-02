@@ -14,12 +14,12 @@ try
     var element4_2D = new Element4_2D(4);
     
     element4_2D.CalculateIntegrationPoints();
-    element4_2D.CalculateNValues();
-    element4_2D.CalculateShapeFuncDerValues();
+    element4_2D.CalculateNValuesSurface();
+    element4_2D.CalculateShapeFuncValues();
     
     //element4_2D.ShFunDer_4_2D_ValPrint();
     
-    mesh.PerformFiniteElementsCalculations(element4_2D, new double[]{600, 1200, 1200, 200});
+    mesh.PerformFiniteElementsCalculations(element4_2D, 100, new double[]{1200, 1200, 1200, 1200});
 
     //mesh.PrintIds();
     //mesh.PrintNodes();

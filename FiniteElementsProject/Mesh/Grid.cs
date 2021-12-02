@@ -18,7 +18,11 @@ public class Grid
     public Element[] Elements { get; set; }
     
     public double[,] GlobalHMatrix { get; set; }
+    public double[,] GlobalCMatrix { get; set; }
     public double[] GlobalPVector { get; set; }
+
+    public double[,] FullHMatrix { get; set; }
+    public double[] FullPVector { get; set; }
 
     public Vector<double> FiniteElementValues { get; set; }
 
@@ -36,7 +40,11 @@ public class Grid
         Elements = new Element[nE];
 
         GlobalHMatrix = new double[nH * nB, nH * nB];
+        GlobalCMatrix = new double[nH * nB, nH * nB];
         GlobalPVector = new double[nN];
+        
+        FullHMatrix = new double[nH * nB, nH * nB];
+        FullPVector = new double[nN];
 
         FiniteElementValues = new DenseVector(nN);
     }
@@ -47,16 +55,18 @@ public class Grid
     /// </summary>
     /// <param name="element42D">Base element</param>
     /// <param name="bcValues">Values of boundary conditions affecting the mesh edges</param>
-    public void PerformFiniteElementsCalculations(Element4_2D element42D, double[] bcValues)
+    public void PerformFiniteElementsCalculations(Element4_2D element42D, double t0, double[] bcValues)
     {
-        this.CalculateNodes();
+        this.CalculateNodes(t0);
         this.CalculateIds();
-        this.CalculateHMatrix(element42D);
+        this.CalculateHAndCMatrix(element42D);
         this.CalculateHbcMatrixAndPVector(element42D, bcValues);
         this.CalculateGlobalHMatrixAndGlobalPVector();
+        this.CalculateFullHMatrix(50);
+        this.CalculateFullPVector(50);
         
-        var hMatrix = Matrix<double>.Build.DenseOfArray(GlobalHMatrix);
-        var pVector = Vector<double>.Build.Dense(GlobalPVector);
+        var hMatrix = Matrix<double>.Build.DenseOfArray(FullHMatrix);
+        var pVector = Vector<double>.Build.Dense(FullPVector);
         FiniteElementValues = hMatrix.Solve(pVector);
     }
 }

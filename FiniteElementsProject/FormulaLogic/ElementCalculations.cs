@@ -73,7 +73,7 @@ public static class ElementCalculations
         
     }
     
-    public static void CalculateShapeFuncDerValues(this Element4_2D element42D)
+    public static void CalculateShapeFuncValues(this Element4_2D element42D)
     {
         var points = element42D.NKsi.GetLength(1);
         var gausQuadrature = new GaussQuadrature();
@@ -91,19 +91,22 @@ public static class ElementCalculations
             {
                 element42D.NKsi[i, j] = element42D.DerKsi[i](nodes.ElementAt(j).Item2);
                 element42D.NEta[i, j] = element42D.DerEta[i](nodes.ElementAt(j).Item1);
+
+                element42D.NValues[j, i] =
+                    element42D.ShapeFunctions[i](nodes.ElementAt(j).Item1, nodes.ElementAt(j).Item2);
             }
         }
     }
 
-    public static double[,] CalculateOneHMatrix(this Element4_2D element42D, int j, double[,] jacobianInverted,
-        int kFactor, double jacobianDet)
+    public static (double[,] HMatrix, double[,] CMatrix) CalculateOneHAndCMatrix(this Element4_2D element42D, int j, double[,] jacobianInverted,
+        int kFactor, double jacobianDet, double heat, double density)
     {
         var size1 = element42D.NKsi.GetLength(0);
-        var size2 = element42D.NKsi.GetLength(1);
-        
+
         var nDerX = new double[size1];
         var nDerY = new double[size1];
         var hMatrix = new double[size1, size1];
+        var cMatrix = new double[size1, size1];
 
         for (int k = 0; k < size1; k++)
         {
@@ -120,14 +123,19 @@ public static class ElementCalculations
                 hMatrix[k, l] = nDerX[k] * nDerX[l] + nDerY[k] * nDerY[l];
                 hMatrix[k, l] *= kFactor;
                 hMatrix[k, l] *= jacobianDet;
+
+                cMatrix[k, l] = element42D.NValues[j, k] * element42D.NValues[j, l];
+                cMatrix[k, l] *= heat;
+                cMatrix[k, l] *= density;
+                cMatrix[k, l] *= jacobianDet;
             }
         }
         
-        return hMatrix;
+        return (hMatrix, cMatrix);
     }
 
     public static (double[,] hbcMatrix, double[] pVector) CalculateOneHbcMatrixAndOnePVector(this Element4_2D element42D,
-        int l, int kFactor, Node node1, Node node2, double t0)
+        int l, int alpha, Node node1, Node node2, double t0)
     {
         var det = ElementHelper.CalculateSideLenght(node1, node2);
         var points = element42D.IntegrationPoints[0].Eta.Length;
@@ -142,22 +150,22 @@ public static class ElementCalculations
             {
                 for (int k = 0; k < points; k++)
                 {
-                    hbcMatrix[i, j] += element42D.ShapeFunctionValues[l].NValues.ElementAt(i)[k] *
-                                       element42D.ShapeFunctionValues[l].NValues.ElementAt(j)[k];
+                    hbcMatrix[i, j] += element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(i)[k] *
+                                       element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(j)[k];
                     hbcMatrix[i, j] *= element42D.IntegrationPoints[l].Scale[k];
                 }
 
-                hbcMatrix[i, j] *= kFactor;
+                hbcMatrix[i, j] *= alpha;
                 hbcMatrix[i, j] *= det;
             }
 
             for (int j = 0; j < points; j++)
             {
-                pVector[i] += element42D.ShapeFunctionValues[l].NValues.ElementAt(i)[j] * t0;
+                pVector[i] += element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(i)[j] * t0;
                 pVector[i] *= element42D.IntegrationPoints[l].Scale[j];
             }
 
-            pVector[i] *= kFactor;
+            pVector[i] *= alpha;
             pVector[i] *= det;
         }
 
@@ -190,7 +198,6 @@ public static class ElementCalculations
             var currentNodeValues = grid.Nodes[currentElement.ID[k] - 1];
             xDerKsi += nKsiValues[k] * currentNodeValues.X; /*tempX[k];*/
             yDerEta += nEtaValues[k] * currentNodeValues.Y; /*tempY[k];*/
-
             yDerKsi += nKsiValues[k] * currentNodeValues.Y; /*tempY[k];*/
             xDerEta += nEtaValues[k] * currentNodeValues.X; /*tempX[k];*/
         }
@@ -202,11 +209,11 @@ public static class ElementCalculations
         return new Jacobian(jacobianNormal, jacobianComplement, jacobianDet);
     }
 
-    public static void CalculateNValues(this Element4_2D element42D)
+    public static void CalculateNValuesSurface(this Element4_2D element42D)
     {
         var iterator = 0;
         
-        foreach (var shapeFunctionValue in element42D.ShapeFunctionValues)
+        foreach (var shapeFunctionValue in element42D.ShapeFunctionValuesSurface)
         {
             var integrationPoint = element42D.IntegrationPoints[iterator];
 
