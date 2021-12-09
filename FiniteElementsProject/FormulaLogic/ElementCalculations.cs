@@ -56,7 +56,7 @@ public static class ElementCalculations
             
             element42D.IntegrationPoints[1].Ksi[2] = 1;
             element42D.IntegrationPoints[1].Eta[2] = elements.values[2];
-            element42D.IntegrationPoints[0].Scale[2] = elements.scale[2];
+            element42D.IntegrationPoints[1].Scale[2] = elements.scale[2];
             
             element42D.IntegrationPoints[2].Ksi[0] = elements.values[2];
             element42D.IntegrationPoints[2].Ksi[1] = elements.values[1];
@@ -68,7 +68,7 @@ public static class ElementCalculations
             element42D.IntegrationPoints[3].Eta[0] = elements.values[2];
             element42D.IntegrationPoints[3].Eta[1] = elements.values[1];
             element42D.IntegrationPoints[3].Eta[2] = elements.values[0];
-            element42D.IntegrationPoints[2].Scale[2] = elements.scale[2];
+            element42D.IntegrationPoints[3].Scale[2] = elements.scale[2];
         }
         
     }
@@ -99,7 +99,7 @@ public static class ElementCalculations
     }
 
     public static (double[,] HMatrix, double[,] CMatrix) CalculateOneHAndCMatrix(this Element4_2D element42D, int j, double[,] jacobianInverted,
-        int kFactor, double jacobianDet, double heat, double density)
+        int kFactor, double jacobianDet, double heat, double density, (double, double) scales)
     {
         var size1 = element42D.NKsi.GetLength(0);
 
@@ -121,10 +121,12 @@ public static class ElementCalculations
             for (int l = 0; l < size1; l++)
             {
                 hMatrix[k, l] = nDerX[k] * nDerX[l] + nDerY[k] * nDerY[l];
+                hMatrix[k, l] *= scales.Item1 * scales.Item2;
                 hMatrix[k, l] *= kFactor;
                 hMatrix[k, l] *= jacobianDet;
 
                 cMatrix[k, l] = element42D.NValues[j, k] * element42D.NValues[j, l];
+                cMatrix[k, l] *= scales.Item1 * scales.Item2;
                 cMatrix[k, l] *= heat;
                 cMatrix[k, l] *= density;
                 cMatrix[k, l] *= jacobianDet;
@@ -141,45 +143,52 @@ public static class ElementCalculations
         var points = element42D.IntegrationPoints[0].Eta.Length;
         var size1 = element42D.NKsi.GetLength(0);
 
+        var hbcOneMatrix = new double[size1, size1];
         var hbcMatrix = new double[size1, size1];
+        var pOneVector = new double[size1];
         var pVector = new double[size1];
 
-        for (int i = 0; i < size1; i++)
+        for (int i = 0; i < points; i++)
         {
             for (int j = 0; j < size1; j++)
             {
-                for (int k = 0; k < points; k++)
+                for (int k = 0; k < size1; k++)
                 {
-                    hbcMatrix[i, j] += element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(i)[k] *
-                                       element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(j)[k];
-                    hbcMatrix[i, j] *= element42D.IntegrationPoints[l].Scale[k];
+                    hbcOneMatrix[j ,k] = element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(j)[i] *
+                                         element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(k)[i];
+                    hbcOneMatrix[j ,k] *= element42D.IntegrationPoints[l].Scale[i];
+                    hbcOneMatrix[j ,k] *= alpha;
+                    hbcOneMatrix[j, k] *= det;
                 }
 
-                hbcMatrix[i, j] *= alpha;
-                hbcMatrix[i, j] *= det;
+                pOneVector[j] = element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(j)[i] * t0;
+                pOneVector[j] *= element42D.IntegrationPoints[l].Scale[i];
+                pOneVector[j] *= alpha;
+                pOneVector[j] *= det;
             }
 
-            for (int j = 0; j < points; j++)
+            for (int j = 0; j < size1; j++)
             {
-                pVector[i] += element42D.ShapeFunctionValuesSurface[l].NValues.ElementAt(i)[j] * t0;
-                pVector[i] *= element42D.IntegrationPoints[l].Scale[j];
-            }
+                for (int k = 0; k < size1; k++)
+                {
+                    hbcMatrix[j, k] += hbcOneMatrix[j, k];
+                }
 
-            pVector[i] *= alpha;
-            pVector[i] *= det;
+                pVector[j] += pOneVector[j];
+            }
         }
 
         return (hbcMatrix, pVector);
     }
 
-    public static Jacobian CalculateOnePointJacobian(this Element4_2D element42D, int i, Grid grid)
+    public static Jacobian CalculateOnePointJacobian(this Element4_2D element42D, int i, int j, Grid grid)
     {
         var nKsiValues = Enumerable.Range(0, element42D.NKsi.GetLength(0))
-            .Select(x => element42D.NKsi[x, 0])
+            .Select(x => element42D.NKsi[x, j])
             .ToArray();
         
         var nEtaValues = Enumerable.Range(0, element42D.NEta.GetLength(0))
-            .Select(x => element42D.NEta[x, 0])
+            .Select(x => element42D.NEta[x, j])
             .ToArray();
 
         var xDerKsi = 0.0;
@@ -190,16 +199,13 @@ public static class ElementCalculations
 
         var currentElement = grid.Elements[i];
 
-        var tempX = new double[] { 0, 0.025, 0.025, 0 };
-        var tempY = new double[] { 0, 0, 0.025, 0.025 };
-
         for (int k = 0; k < 4; k++)
         {
             var currentNodeValues = grid.Nodes[currentElement.ID[k] - 1];
-            xDerKsi += nKsiValues[k] * currentNodeValues.X; /*tempX[k];*/
-            yDerEta += nEtaValues[k] * currentNodeValues.Y; /*tempY[k];*/
-            yDerKsi += nKsiValues[k] * currentNodeValues.Y; /*tempY[k];*/
-            xDerEta += nEtaValues[k] * currentNodeValues.X; /*tempX[k];*/
+            xDerKsi += nKsiValues[k] * currentNodeValues.X;
+            yDerEta += nEtaValues[k] * currentNodeValues.Y;
+            yDerKsi += nKsiValues[k] * currentNodeValues.Y;
+            xDerEta += nEtaValues[k] * currentNodeValues.X;
         }
         
         var jacobianNormal = new [,] { { xDerKsi, yDerKsi }, { xDerEta, yDerEta } };

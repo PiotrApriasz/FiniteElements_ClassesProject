@@ -11,7 +11,7 @@ using MathNet.Numerics.LinearAlgebra;
 try
 {
     var mesh = new Grid(0.1, 0.1, 4, 4);
-    var element4_2D = new Element4_2D(4);
+    var element4_2D = new Element4_2D(9);
     
     element4_2D.CalculateIntegrationPoints();
     element4_2D.CalculateNValuesSurface();

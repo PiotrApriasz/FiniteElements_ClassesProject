@@ -113,4 +113,35 @@ public class GaussQuadrature
         return nodes;
     }
     
+    public List<(double, double)> Get4PointsScales()
+    {
+        var scales = new List<(double, double)>()
+        {
+            (1, 1),
+            (1, 1),
+            (1, 1),
+            (1, 1)
+        };
+
+        return scales;
+    }
+
+    public List<(double, double)> Get9PointsScales()
+    {
+        var scales = new List<(double, double)>()
+        {
+            (5.0/9,5.0/9),
+            (8.0/9,5.0/9),
+            (5.0/9,5.0/9),
+            (5.0/9,8.0/9),
+            (5.0/9,5.0/9),
+            (8.0/9,5.0/9),
+            (5.0/9,5.0/9),
+            (5.0/9,8.0/9),
+            (8.0/9,8.0/9)
+        };
+
+        return scales;
+    }
+    
 }

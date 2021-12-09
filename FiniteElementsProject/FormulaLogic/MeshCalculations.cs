@@ -65,6 +65,12 @@ public static class MeshCalculations
     {
         var points = element42D.NKsi.GetLength(1);
         var size1 = element42D.NKsi.GetLength(0);
+        
+        var gausQuadrature = new GaussQuadrature();
+
+        var scales = new List<(double, double)>();
+
+        scales = points == 9 ? gausQuadrature.Get9PointsScales() : gausQuadrature.Get4PointsScales();
 
         for (int i = 0; i < grid.Elements.Length; i++)
         {
@@ -73,11 +79,11 @@ public static class MeshCalculations
             
             for (int j = 0; j < points; j++)
             {
-                var jacobian = element42D.CalculateOnePointJacobian(i, grid);
+                var jacobian = element42D.CalculateOnePointJacobian(i, j, grid);
                 //jacobian.PrintJacobian(i, j);
 
                 var matrixes = element42D.CalculateOneHAndCMatrix(j, jacobian.JacobianInverted, 25,
-                    jacobian.JacobianDet, 700, 7800);
+                    jacobian.JacobianDet, 700, 7800, scales.ElementAt(j));
 
                 for (int k = 0; k < size1; k++)
                 {
@@ -98,14 +104,6 @@ public static class MeshCalculations
     {
         var size1 = element42D.NKsi.GetLength(0);
 
-        var nodesTemp = new[]
-        {
-            new Node() { X = 0.0, Y = 0.0, BoundaryCondition = true },
-            new Node() { X = 0.025, Y = 0.0, BoundaryCondition = true },
-            new Node() { X = 0.025, Y = 0.025 },
-            new Node() { X = 0, Y = 0.025, BoundaryCondition = true }
-        };
-
         for (var i = 0; i < grid.Elements.Length; i++)
         {
             var hbcMatrix = new double[size1, size1];
@@ -115,8 +113,6 @@ public static class MeshCalculations
             {
                 var node1 = grid.Nodes[grid.Elements[i].ID[j] - 1];
                 var node2 = j == 3 ? grid.Nodes[grid.Elements[i].ID[0] - 1] : grid.Nodes[grid.Elements[i].ID[j + 1] - 1];
-                //var node1 = nodesTemp[j];
-                //var node2 = j == 3 ? nodesTemp[0] : nodesTemp[j + 1];
 
                 if (node1.BoundaryCondition && node2.BoundaryCondition)
                 {

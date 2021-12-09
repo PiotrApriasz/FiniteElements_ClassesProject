@@ -48,13 +48,7 @@ public class Grid
 
         FiniteElementValues = new DenseVector(nN);
     }
-
-    /// <summary>
-    /// Function which executes all necessary operartions to get final
-    /// values of searched variable (ex. each nodes temperature or pressure)
-    /// </summary>
-    /// <param name="element42D">Base element</param>
-    /// <param name="bcValues">Values of boundary conditions affecting the mesh edges</param>
+    
     public void PerformFiniteElementsCalculations(Element4_2D element42D, double t0, double[] bcValues)
     {
         this.CalculateNodes(t0);
