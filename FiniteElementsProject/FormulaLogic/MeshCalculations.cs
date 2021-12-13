@@ -61,7 +61,19 @@ public static class MeshCalculations
         }
     }
 
-    public static void CalculateHAndCMatrix(this Grid grid, Element4_2D element42D)
+    public static void SetNewNodesTemperature(this Grid grid, IEnumerable<double> temperatures)
+    {
+        var iterator = 0;
+        
+        foreach (var temperature in temperatures)
+        {
+            grid.Nodes[iterator].T0 = temperature;
+            iterator++;
+        }
+    }
+
+    public static void CalculateHAndCMatrix(this Grid grid, Element4_2D element42D, double conductivity, 
+        double specificHeat, double density)
     {
         var points = element42D.NKsi.GetLength(1);
         var size1 = element42D.NKsi.GetLength(0);
@@ -82,8 +94,8 @@ public static class MeshCalculations
                 var jacobian = element42D.CalculateOnePointJacobian(i, j, grid);
                 //jacobian.PrintJacobian(i, j);
 
-                var matrixes = element42D.CalculateOneHAndCMatrix(j, jacobian.JacobianInverted, 25,
-                    jacobian.JacobianDet, 700, 7800, scales.ElementAt(j));
+                var matrixes = element42D.CalculateOneHAndCMatrix(j, jacobian.JacobianInverted,
+                    conductivity, jacobian.JacobianDet, specificHeat, density, scales.ElementAt(j));
 
                 for (int k = 0; k < size1; k++)
                 {
@@ -100,7 +112,8 @@ public static class MeshCalculations
         }
     }
 
-    public static void CalculateHbcMatrixAndPVector(this Grid grid, Element4_2D element42D, double[] bcValues)
+    public static void CalculateHbcMatrixAndPVector(this Grid grid, Element4_2D element42D, double[] heatingValues, 
+        double alpha)
     {
         var size1 = element42D.NKsi.GetLength(0);
 
@@ -119,8 +132,8 @@ public static class MeshCalculations
                     double[,] oneHbcMatrix;
                     double[] onePVector;
                     
-                    (oneHbcMatrix, onePVector) = element42D.CalculateOneHbcMatrixAndOnePVector(j, 300, node1,
-                        node2, bcValues[j]);
+                    (oneHbcMatrix, onePVector) = element42D.CalculateOneHbcMatrixAndOnePVector(j, alpha, node1,
+                        node2, heatingValues[j]);
 
                     for (int k = 0; k < size1; k++)
                     {

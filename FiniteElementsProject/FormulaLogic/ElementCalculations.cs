@@ -99,7 +99,7 @@ public static class ElementCalculations
     }
 
     public static (double[,] HMatrix, double[,] CMatrix) CalculateOneHAndCMatrix(this Element4_2D element42D, int j, double[,] jacobianInverted,
-        int kFactor, double jacobianDet, double heat, double density, (double, double) scales)
+        double conductivity, double jacobianDet, double heat, double density, (double, double) scales)
     {
         var size1 = element42D.NKsi.GetLength(0);
 
@@ -122,7 +122,7 @@ public static class ElementCalculations
             {
                 hMatrix[k, l] = nDerX[k] * nDerX[l] + nDerY[k] * nDerY[l];
                 hMatrix[k, l] *= scales.Item1 * scales.Item2;
-                hMatrix[k, l] *= kFactor;
+                hMatrix[k, l] *= conductivity;
                 hMatrix[k, l] *= jacobianDet;
 
                 cMatrix[k, l] = element42D.NValues[j, k] * element42D.NValues[j, l];
@@ -137,7 +137,7 @@ public static class ElementCalculations
     }
 
     public static (double[,] hbcMatrix, double[] pVector) CalculateOneHbcMatrixAndOnePVector(this Element4_2D element42D,
-        int l, int alpha, Node node1, Node node2, double t0)
+        int l, double alpha, Node node1, Node node2, double t0)
     {
         var det = ElementHelper.CalculateSideLenght(node1, node2);
         var points = element42D.IntegrationPoints[0].Eta.Length;

@@ -1,5 +1,6 @@
 ﻿using FiniteElementsProject.Elements;
 using FiniteElementsProject.FormulaLogic;
+using FiniteElementsProject.Helpers;
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
@@ -24,7 +25,9 @@ public class Grid
     public double[,] FullHMatrix { get; set; }
     public double[] FullPVector { get; set; }
 
-    public Vector<double> FiniteElementValues { get; set; }
+    public Vector<double> CalculatedTempValues { get; set; }
+
+    public List<FinalResultsHelper> FinalResults { get; set; }
 
     public Grid(double h, double b, int nh, int nb)
     {
@@ -46,21 +49,42 @@ public class Grid
         FullHMatrix = new double[nH * nB, nH * nB];
         FullPVector = new double[nN];
 
-        FiniteElementValues = new DenseVector(nN);
+        CalculatedTempValues = new DenseVector(nN);
+
+        FinalResults = new List<FinalResultsHelper>();
     }
     
-    public void PerformFiniteElementsCalculations(Element4_2D element42D, double t0, double[] bcValues)
+    public void PerformFiniteElementsCalculations(Element4_2D element42D, double t0, double[] heatingValues, 
+        int iterations, int timeStep, double alpha, double specificHeat, double conductivity, double density)
     {
+        var time = timeStep;
+        
         this.CalculateNodes(t0);
         this.CalculateIds();
-        this.CalculateHAndCMatrix(element42D);
-        this.CalculateHbcMatrixAndPVector(element42D, bcValues);
-        this.CalculateGlobalHMatrixAndGlobalPVector();
-        this.CalculateFullHMatrix(50);
-        this.CalculateFullPVector(50);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            this.CalculateHAndCMatrix(element42D, conductivity, specificHeat, density);
+            this.CalculateHbcMatrixAndPVector(element42D, heatingValues, alpha);
+            this.CalculateGlobalHMatrixAndGlobalPVector();
+            this.CalculateFullHMatrix(timeStep);
+            this.CalculateFullPVector(timeStep);
         
-        var hMatrix = Matrix<double>.Build.DenseOfArray(FullHMatrix);
-        var pVector = Vector<double>.Build.Dense(FullPVector);
-        FiniteElementValues = hMatrix.Solve(pVector);
+            var hMatrix = Matrix<double>.Build.DenseOfArray(FullHMatrix);
+            var pVector = Vector<double>.Build.Dense(FullPVector);
+            CalculatedTempValues = hMatrix.Solve(pVector);
+            
+            FinalResults.Add(new FinalResultsHelper()
+            {
+                Time = time,
+                MinTemp = CalculatedTempValues.Min(),
+                MaxTemp = CalculatedTempValues.Max()
+            });
+
+            time += timeStep;
+        
+            this.SetNewNodesTemperature(CalculatedTempValues);
+        }
+        
     }
 }

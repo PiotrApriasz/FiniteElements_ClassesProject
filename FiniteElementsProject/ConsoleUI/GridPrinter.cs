@@ -1,5 +1,7 @@
-﻿using FiniteElementsProject.FormulaPartsLibrary;
-using FiniteElementsProject.Mesh;
+﻿using System.Globalization;
+using FiniteElementsProject.FormulaPartsLibrary;
+using Spectre.Console;
+using Grid = FiniteElementsProject.Mesh.Grid;
 
 namespace FiniteElementsProject.ConsoleUI;
 
@@ -157,18 +159,22 @@ public static class GridPrinter
         Console.WriteLine();
     }
 
+
+
     public static void PrintFinalValues(this Grid grid)
     {
-        Console.WriteLine("Final values of searched variable --------------------------------------");
-        Console.WriteLine();
+        var table = new Table();
 
-        for (int i = 0; i < grid.nN; i++)
+        table.AddColumn(new TableColumn("Time |s|").Centered());
+        table.AddColumn(new TableColumn("Minimum Temperature |C|").Centered());
+        table.AddColumn(new TableColumn("Maximum Temperature |C|").Centered());
+
+        foreach (var finalResult in grid.FinalResults)
         {
-            Console.WriteLine($"Value {i + 1}: {grid.FiniteElementValues[i]:0.000}");
+            table.AddRow(finalResult.Time.ToString(), finalResult.MinTemp.ToString("0.000",CultureInfo.CurrentCulture),
+                finalResult.MaxTemp.ToString("0.000",CultureInfo.CurrentCulture));
         }
         
-        Console.WriteLine();
-        Console.WriteLine("-------------------------------------------------------------------");
-        Console.WriteLine();
+        AnsiConsole.Write(table);
     }
 }
